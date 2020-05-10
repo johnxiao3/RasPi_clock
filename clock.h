@@ -38,6 +38,12 @@
 #include <errno.h>
 #include <time.h>
 #include <ctype.h>
+#include <glib.h>
+#include <math.h>
+
+#ifndef M_PI
+#    define M_PI 3.14159265358979323846
+#endif
 
 void		on_destroy();
 gboolean	clock_timer_handler();
@@ -73,13 +79,15 @@ gboolean clock_timer_handler() { // check pulse every 1000 millisecs
 //--------------------------
 //	draw meter
 //--------------------------
-#define MHOR 106.0
-#define MVER 76.0
-#define METER_R 50.0
+#define MHOR 450.0
+#define MVER 350.0
+#define METER_R 200.0
+
+#define MARGIN 20
 void longMashMarks(cairo_t *cr){
 	double x,y,x1,y1;
 	double X = 0;
-	cairo_set_source_rgb(cr, 0.5, 0.5, 1.0); // blue
+	cairo_set_source_rgb(cr, 1.0, 1.0, 1.0); // white
 	cairo_set_line_width(cr, 2.5);
 	for (int i = 0; i < 60; i++ ) { // all long hash marks
 		//Put marks only on 5 second intervals (0, 5, 10, ...)
@@ -101,6 +109,15 @@ void longMashMarks(cairo_t *cr){
 		//			hash mark is M_PI / 30.0 apart.
 		X = X + M_PI / 30.0; 
 	}
+	//draw the rectangle
+	cairo_set_source_rgb(cr, 1.0, 1.0, 1.0); // white
+	cairo_set_line_width(cr, 2.);
+	cairo_move_to(cr, MHOR - METER_R - MARGIN, MVER - METER_R - MARGIN);
+	cairo_line_to (cr, MHOR - METER_R - MARGIN, MVER + 1.2*METER_R + MARGIN);
+	cairo_line_to (cr, MHOR + METER_R + MARGIN, MVER + 1.2*METER_R + MARGIN);
+	cairo_line_to (cr, MHOR + METER_R + MARGIN, MVER - METER_R - MARGIN);
+	cairo_line_to (cr, MHOR - METER_R - MARGIN, MVER - METER_R - MARGIN);
+	cairo_stroke (cr);
 }
 
 void needles(cairo_t *cr, double hor, double ver, double needle_length, double needle_position, double meter_radius, int cFlg) {
@@ -117,9 +134,7 @@ void needles(cairo_t *cr, double hor, double ver, double needle_length, double n
 	else if (cFlg == 3) cairo_set_source_rgb(cr, 0.5, 1.0, 0.5); // blue
 
 	if (cFlg == 1) {
-
 		for (int i = 0; i< 60; i++ ) { // all short dot marks
-	
 			if (i % 5) {
 
 				cairo_arc (cr, hor, ver, needle_length + 2, -M_PI, -M_PI + X); //long length
@@ -155,7 +170,6 @@ void needles(cairo_t *cr, double hor, double ver, double needle_length, double n
     cairo_arc (cr, hor, ver, 4.0, -M_PI, M_PI ); // -M_PI -> 0.0 -> +M_PI : full circle
     cairo_line_to (cr, hor, ver+3 );
     cairo_fill(cr); // fill in arc
-
 }
 
 /*
@@ -170,18 +184,16 @@ gboolean on_draw2_draw (GtkDrawingArea *widget, cairo_t *cr) {
 	double hor, ver, needle_length, meter_radius, needle_position;
 	hor = MHOR;
 	ver = MVER;
-	meter_radius = 50;
+	meter_radius = METER_R;
 	longMashMarks(cr);
 	//----------------------------------------------------------------------
 	//	note: don't alter original (hour,minute,second) variables as
 	//	re-draws triggered by system will used modified values
 	//----------------------------------------------------------------------
-
 	//-----------------------------------------------------------------------------
 	//	Zero for a clock it straight up. Adjust needle positions accordingly
 	//	Example: if hour == zero, needle should be straight up: add 3 hours.
 	//-----------------------------------------------------------------------------
-
 	//---------------------------------------------------------------------------
 	//	Sixty minutes to an hour: Adjust hour to include how close minute
 	//	hand is to the next hour.
@@ -194,7 +206,7 @@ gboolean on_draw2_draw (GtkDrawingArea *widget, cairo_t *cr) {
 	//--------------------------------------------------------------------------
 
 	needle_position = needle_position * (M_PI / 6.0);
-	needle_length = 35.0;
+	needle_length = METER_R*35.0/50.0;
 	needles(cr, hor, ver, needle_length, needle_position, meter_radius, 3);
 
 	//--------------------------------
@@ -208,7 +220,7 @@ gboolean on_draw2_draw (GtkDrawingArea *widget, cairo_t *cr) {
 	//----------------------------------------------
 
 	needle_position = needle_position * (M_PI / 30.0);
-	needle_length = 45.0;
+	needle_length = METER_R*45.0/50.0;
 	needles(cr, hor, ver, needle_length, needle_position, meter_radius, 2);
 
 	//----------------------------------------------------------
@@ -217,17 +229,18 @@ gboolean on_draw2_draw (GtkDrawingArea *widget, cairo_t *cr) {
 
 	needle_position = second + 15;	// adjust zero to top of dial
 	needle_position = needle_position * (M_PI / 30.0);
-	needle_length = 50.0;
+	needle_length = METER_R*50.0/50.0;
 	needles(cr, hor, ver, needle_length, needle_position, meter_radius, 1);
 
 	//---------------------------------
 	//	Show digital text of time
 	//---------------------------------
 
-	cairo_move_to (cr, 40.0, 150.0 ); // location: horizontal, vertical
+	cairo_move_to (cr, MHOR-METER_R*0.95-MARGIN+5, MVER+METER_R*1.05+MARGIN); // location: horizontal, vertical
+	cairo_set_font_size(cr, 10+(int)((METER_R-50)/10));
 	cairo_show_text(cr, time_string); // you can change the font if you want
 	cairo_stroke (cr);
-	
+
 
 	return FALSE;
 }

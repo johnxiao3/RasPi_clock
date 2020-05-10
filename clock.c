@@ -50,6 +50,8 @@
 #include <ctype.h>
 #include <sys/mman.h>
 #include <sys/shm.h>
+#include <math.h>
+
 
 GtkWidget	*window;
 GtkWidget	*fixed1;
@@ -65,10 +67,9 @@ int main(int argc, char *argv[]) {
 
 	gtk_init(&argc, &argv); // init Gtk
 
-//-----------------------
-//	GTK interface
-//-----------------------
-
+	//-----------------------
+	//	GTK interface
+	//-----------------------
 	builder = gtk_builder_new_from_file ("part1.glade");
  
 	window = GTK_WIDGET(gtk_builder_get_object(builder, "window"));
@@ -82,7 +83,7 @@ int main(int argc, char *argv[]) {
 
 	g_object_unref(builder);
 
-//	gtk_window_set_keep_above (GTK_WINDOW(window), TRUE); // un-comment to keep on top
+	//	gtk_window_set_keep_above (GTK_WINDOW(window), TRUE); // un-comment to keep on top
 
 	gtk_widget_show(window);
 
@@ -94,7 +95,7 @@ int main(int argc, char *argv[]) {
         	color.green = 0x0000;
 	}
 
-        gtk_widget_modify_bg(window, GTK_STATE_NORMAL, &color); // set background color
+    gtk_widget_modify_bg(window, GTK_STATE_NORMAL, &color); // set background color
 
 	gtk_window_set_title(GTK_WINDOW(window), "Clock v1.0");
 
